@@ -13,8 +13,7 @@ import numpy as np
 import cv2
 
 
-def draw_flow(img, flow, step=16):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def draw_flow(img, gray, flow, step=16):
     h, w = gray.shape[:2]
     y, x = np.mgrid[step / 2:h:step, step / 2:w:step].reshape(2, -1).astype(int)
     fx, fy = flow[y, x].T
@@ -46,8 +45,11 @@ if __name__ == '__main__':
     except IndexError:
         fn = 0
 
+    scale = 0.8
     cap = cv2.VideoCapture(fn)
     ret, prev = cap.read()
+    h, w = prev.shape[0:2]
+    prev = cv2.resize(prev, (int(w * scale), int(h * scale)))
     prevgray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
     show_hsv = False
     min_distance = 5
@@ -57,14 +59,16 @@ if __name__ == '__main__':
 
     while(cap.isOpened()):
         ret, img = cap.read()
+        h, w = img.shape[0:2]
+        img = cv2.resize(img, (int(w * scale), int(h * scale)))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.8, 5, 30, 3, 7, 1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
+        # flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.8, 5, 30, 3, 7, 1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
+        flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 5, 25, 3, 7, 1.5, 0)
         prevgray = gray
         # get norms
         h, w = flow.shape[:2]
-        flow_part = cv2.resize(flow, (w, h)).astype(int)
-        norms = np.linalg.norm(flow_part, axis=2)
-        norms = norms / max(30, norms.max()) * 255
+        norms = np.linalg.norm(flow, axis=2)
+        norms = norms / max(30, norms.max()) * 255  # 缩放到255尺度
         norms = norms.astype(np.uint8)
         norms[np.logical_and(-1 * min_distance < norms, norms < min_distance)] = 0
         norms = np.abs(norms)
@@ -97,7 +101,8 @@ if __name__ == '__main__':
         b_bin, g_bin, r_bin = cv2.split(img_bin)
         b, g, r = cv2.split(img)
         img = cv2.merge([b & b_bin, g & g_bin, r & r_bin])
-        cv2.imshow('flow', draw_flow(img, flow))
+        # cv2.imshow('flow', draw_flow(img, gray, flow))
+        cv2.imshow('flow', img)
         if show_hsv:
             cv2.imshow('flow HSV', draw_hsv(flow))
         ch = cv2.waitKey(1)
