@@ -7,4 +7,4 @@
 
 ## 运行
 
-要运行`optical_flow_GF_detector.py`的话, 执行`python optical_flow_GF_detector.py`以默认摄像头为视频源运行; 执行`python optical_flow_GF_detector.py ./test.mkv`以当前文件夹下`test.mkv`为视频源运行.
+要运行`optical_flow_GF_detector.py`的话, 执行`python optical_flow_GF_detector.py`以默认摄像头为视频源运行; 执行`python optical_flow_GF_detector.py ./test/test.mkv`以当前文件夹下`test.mkv`为视频源运行.

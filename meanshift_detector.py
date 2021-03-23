@@ -39,7 +39,7 @@ def set_target(img):
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)  # 从默认相机读取
-    #  cap = cv2.VideoCapture('./test.mkv')
+    #  cap = cv2.VideoCapture('./test/test.mkv')
 
     ret, frame = cap.read()
     track_window = set_target(frame)

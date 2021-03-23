@@ -2,7 +2,7 @@ import time
 import cv2
 import numpy as np
 
-camera = cv2.VideoCapture('./test1.mp4')  # 参数0表示第一个摄像头
+camera = cv2.VideoCapture('./test/test1.mp4')  # 参数0表示第一个摄像头
 # if (camera.isOpened()):      # 判断视频是否打开
 #     print('Open')
 # else:
