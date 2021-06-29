@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 '''
-基于Gunnar_Farneback算法的稠密光流法
+基于Gunnar_Farneback算法的稠密光流法目标跟踪器
 
-USAGE: optical_flow_GF_detector.py [<video_source>]
+USAGE: python optical_flow_GF_detector.py [<video_source>]
 Keys:
     1 - toggle HSV flow visualization
     ESC    - exit
@@ -40,16 +40,16 @@ def draw_hsv(flow):
 
 if __name__ == '__main__':
     import sys
+    from utils import Recorder
     try:
-        fn = sys.argv[1]
+        source = sys.argv[1]
     except IndexError:
-        fn = 0
+        source = 0
 
-    scale = 0.8
-    cap = cv2.VideoCapture(fn)
+    cap = cv2.VideoCapture(source)
     ret, prev = cap.read()
     h, w = prev.shape[0:2]
-    prev = cv2.resize(prev, (int(w * scale), int(h * scale)))
+    scale = 0.8
     prevgray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
     show_hsv = False
     min_distance = 5
@@ -57,10 +57,12 @@ if __name__ == '__main__':
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
 
+    # 创建recorder
+    recorder = Recorder(cap, './log/optical_flow_GF')
+
     while(cap.isOpened()):
         ret, img = cap.read()
         h, w = img.shape[0:2]
-        img = cv2.resize(img, (int(w * scale), int(h * scale)))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.8, 5, 30, 3, 7, 1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
         flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 5, 25, 3, 7, 1.5, 0)
@@ -95,13 +97,18 @@ if __name__ == '__main__':
         if moments['m00'] != 0:
             cx = moments['m10'] / moments['m00'] / w
             cy = moments['m01'] / moments['m00'] / h
-            print("x: %.6f, y: %.6f" % (cx, cy))
+            info = "x: %.6f, y: %.6f" % (cx, cy)
+            print(info)
+        else:
+            info = ''
         img_bin = cv2.bitwise_not(img_bin, dst=None)
         # 将标红的目标融合到原图像
         b_bin, g_bin, r_bin = cv2.split(img_bin)
         b, g, r = cv2.split(img)
         img = cv2.merge([b & b_bin, g & g_bin, r & r_bin])
         # cv2.imshow('flow', draw_flow(img, gray, flow))
+        recorder.write(img, info)
+        img = cv2.resize(img, (int(w * scale), int(h * scale)))
         cv2.imshow('flow', img)
         if show_hsv:
             cv2.imshow('flow HSV', draw_hsv(flow))
@@ -110,5 +117,6 @@ if __name__ == '__main__':
             break
         if ch == ord('1'):
             show_hsv = not show_hsv
-    cv2.destroyAllWindows()
+    recorder.release()
     cap.release()
+    cv2.destroyAllWindows()
