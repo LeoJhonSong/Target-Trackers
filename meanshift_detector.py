@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+
+'''
+基于MeanShift算法的手动框选目标跟踪器
+
+USAGE: python meanshift_detector.py [<video_source>]
+Keys:
+    ESC    - exit
+'''
+
 import numpy as np
 import cv2
 
@@ -32,18 +41,28 @@ def set_target(img):
         cv2.waitKey(1)
 
     top_left = ((min(mouse_params['tl'][0], mouse_params['br'][0]), min(mouse_params['tl'][1], mouse_params['br'][1])))
-    bottom_right = ((max(mouse_params['tl'][0], mouse_params['br'][0]), max(mouse_params['tl'][1], mouse_params['br'][1])))
-    topLeft_x, height, topLeft_y, width = top_left[0], bottom_right[1] - top_left[1], top_left[1], bottom_right[0] - top_left[0]
+    bottom_right = ((max(mouse_params['tl'][0], mouse_params['br'][0]),
+                    max(mouse_params['tl'][1], mouse_params['br'][1])))
+    topLeft_x, height, topLeft_y, width = top_left[0], bottom_right[1] - \
+        top_left[1], top_left[1], bottom_right[0] - top_left[0]
     return (topLeft_x, topLeft_y, width, height)
 
 
 if __name__ == "__main__":
-    cap = cv2.VideoCapture(0)  # 从默认相机读取
-    #  cap = cv2.VideoCapture('./test/test.mkv')
+    import sys
+    from utils import Recorder
+    try:
+        source = sys.argv[1]
+    except IndexError:
+        source = 0
 
+    cap = cv2.VideoCapture(source)  # 从默认相机读取
     ret, frame = cap.read()
     track_window = set_target(frame)
     topLeft_x, topLeft_y, width, height = track_window
+
+    # 创建recorder
+    recorder = Recorder(cap, './log/meanshift')
 
     # ROI设置
     roi = frame[topLeft_y: topLeft_y + height, topLeft_x: topLeft_x + width]
@@ -68,11 +87,17 @@ if __name__ == "__main__":
 
         topLeft_x, topLeft_y, width, height = track_window
         cv2.rectangle(frame, (topLeft_x, topLeft_y), (topLeft_x + width, topLeft_y + height), 255, 2)
-        cv2.rectangle(frame, (int(topLeft_x + width / 2), int(topLeft_y + height / 2)), (int(topLeft_x + width / 2), int(topLeft_y + height / 2)), (0, 0, 255), 5)
+        cv2.rectangle(frame, (int(topLeft_x + width / 2), int(topLeft_y + height / 2)),
+                      (int(topLeft_x + width / 2), int(topLeft_y + height / 2)), (0, 0, 255), 5)
         cv2.imshow('MeanShift Detector', frame)
         cx = (topLeft_x + width / 2) / frame.shape[1]
         cy = (topLeft_y + height / 2) / frame.shape[0]
-        print('坐标: ' + str(cx) + ', ' + str(cy))
+        info = '坐标: ' + str(cx) + ', ' + str(cy)
+        print(info)
+        recorder.write(frame, info)
+        if cv2.waitKey(1) == 27:
+            break
 
+    recorder.release()
     cv2.destroyAllWindows()
     cap.release()
