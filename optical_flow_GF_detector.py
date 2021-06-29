@@ -62,6 +62,11 @@ if __name__ == '__main__':
 
     while(cap.isOpened()):
         ret, img = cap.read()
+        ch = cv2.waitKey(1)
+        if ch == 27 or not ret:
+            break
+        if ch == ord('1'):
+            show_hsv = not show_hsv
         h, w = img.shape[0:2]
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.8, 5, 30, 3, 7, 1.5, cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
@@ -112,11 +117,6 @@ if __name__ == '__main__':
         cv2.imshow('flow', img)
         if show_hsv:
             cv2.imshow('flow HSV', draw_hsv(flow))
-        ch = cv2.waitKey(1)
-        if ch == 27 or not ret:
-            break
-        if ch == ord('1'):
-            show_hsv = not show_hsv
     recorder.release()
     cap.release()
     cv2.destroyAllWindows()
